@@ -5,5 +5,6 @@ MAINTAINER Geoffrey Arnold "geoffrey.arnold@alleghenycounty.us"
 RUN pip install oauthlib requests-oauthlib xlrd openpyxl
 
 COPY sharepoint_to_staging.py /
+COPY select_sharepoint_to_staging.py /
 
 CMD [ "python", "-u", "sharepoint_to_staging.py" ]

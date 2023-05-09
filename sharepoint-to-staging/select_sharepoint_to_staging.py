@@ -64,6 +64,16 @@ token = oauth.fetch_token(
 bearer = "Bearer {}".format(token['access_token'])
 headers = {'authorization': bearer}
 
+# Column Specs
+
+# lines used for defining file location for import, local testing
+# f = open(columns)
+# columns_select = json.load(f)
+# column_list = [sub['COLUMN_NAME'] for sub in columns_select]
+
+columns_select = json.loads(columns)
+column_list = [sub['COLUMN_NAME'] for sub in columns_select]
+
 if drive_type == 'drives':
     url = "https://graph.microsoft.com/v1.0/drives/{}/items/{}/content".format(drive, file_id)
 else:
@@ -80,18 +90,18 @@ with open(filename, 'wb') as output:
     output.write(file.content)
 
 if sheet == '':
-    df = pd.read_excel(filename)
+    df = pd.read_excel(filename, usecols=column_list)
 elif sheet == 'all':
     xls = pd.ExcelFile(filename)
     df = pd.DataFrame()
     for i in xls.sheet_names:
-        temp = pd.read_excel(filename, sheet_name=i)
+        temp = pd.read_excel(filename, sheet_name=i, usecols=column_list)
         df = df.append(temp)
 else:
     if skip == 0:
-        df = pd.read_excel(filename, sheet_name=sheet)
+        df = pd.read_excel(filename, sheet_name=sheet, usecols=column_list)
     else:
-        df = pd.read_excel(filename, sheet_name=sheet, skiprows=range(0, skip))
+        df = pd.read_excel(filename, sheet_name=sheet, skiprows=range(0, skip), usecols=column_list)
 
 if filetype != 'x':
     df = df.loc[:, ~df.columns.str.startswith('Unnamed')]
