@@ -18,6 +18,7 @@ wh_db = os.getenv("wh_db")
 wh_un = os.getenv("wh_user")
 wh_pw = os.getenv("wh_pass")
 schema = os.getenv("schema", 'Staging')
+columns = os.getenv("columns")
 
 sheet = os.getenv("sheet", '')
 skip = int(os.getenv('skip', 0))
