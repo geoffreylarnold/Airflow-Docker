@@ -21,7 +21,7 @@ schema = os.getenv("schema", 'Staging')
 
 sheet = os.getenv("sheet", '')
 skip = int(os.getenv('skip', 0))
-filetype = os.getenv("filetype", '')
+filetype = os.getenv("file_type", '')
 
 # Build Connection & Query Warehouse
 connection_url = URL.create(
