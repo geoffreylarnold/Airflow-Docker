@@ -4,9 +4,10 @@ Data-Validate/.ipynb_checkpoints/.env-checkpoint
 Python/instantclient_19_5/*
 .Rproj.user
 *.tar
-*.ipynb
 Data-Validate/.ipynb_checkpoints/Schema-Validate-checkpoint.py
 .Rhistory
 Python-Selenium-Firefox/instantclient_19_5/*
 .idea/
 .env
+Python/.ipynb_checkpoints/Python3.10 Connection schema-checkpoint.ipynb
+Python/Python3.10 Connection schema.ipynb
