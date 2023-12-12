@@ -80,9 +80,17 @@ headers = {
 catalog_records = pd.DataFrame()
 
 for collection in df_collections:
-    response = requests.get(
-        "https://api.data.world/v0/metadata/data/sources/alleghenycounty/{}/tables?size=1000".format(collection),
-        headers=headers)
+    attempt = 0
+    while True:
+        try:
+            response = requests.get(
+                "https://api.data.world/v0/metadata/data/sources/alleghenycounty/{}/tables?size=1000".format(
+                    collection),
+                headers=headers)
+            print(response.url, "[", attempt, "]")
+            break
+        except SSLError:
+            continue
     d = loads(response.text)
     df_d = pd.DataFrame(d['records'])
     catalog_records = pd.concat([df_d, catalog_records], ignore_index=True)
@@ -105,14 +113,21 @@ for tablet in df_tables['Datatable_Title_value']:
                 format(sourceid.iloc[0]['CollectionName_value'],
                        tablet),
                 headers=headers)
+            new_batch = pd.DataFrame()
+            d = loads(response.text)
+            df_d = pd.json_normalize(d, 'records')
+            new_batch = pd.concat([df_d, new_batch], ignore_index=True)
+            while "nextPageToken" in response.json():
+                next_page = d['nextPageToken']
+                response = requests.get("""https://api.data.world/v0/{}""".format(next_page), headers=headers)
+                d = loads(response.text)
+                df_d = pd.json_normalize(d, 'records')
+                new_batch = pd.concat([df_d, new_batch], ignore_index=True)
             print(response.url, "[", attempt, "]")
             break
         except SSLError:
             continue
-
-    d = loads(response.text)
-    df_d = pd.json_normalize(d, 'records')
-    column_data = pd.concat([df_d, column_data], ignore_index=True)
+    column_data = pd.concat([new_batch, column_data], ignore_index=True)
     time.sleep(0.1)
 
 column_IRI = column_data.explode('collections')
@@ -121,7 +136,12 @@ column_IRI = pd.concat([column_IRI.drop(['collections'], axis=1),
                         column_IRI['collections'].apply(pd.Series)], axis=1)
 column_data = column_data.join(column_IRI["collectionId"], lsuffix="", rsuffix="_x")
 
+column_data = pd.merge(column_data, df[['Datatable_Title_value', 'ColumnTitle_value', 'CollectionName_value']],
+                       how='inner', left_on=['table.tableId', 'title', 'table.sourceId'],
+                       right_on=['Datatable_Title_value', 'ColumnTitle_value', 'CollectionName_value'])
+
 # Produce counts of columns per table to use for if else statement in line 137
+# table_column_count = df.groupby(["Datatable_Title_value", "CollectionName_value"], as_index=False).size()
 table_column_count = column_data.groupby(["table.tableId", "collectionId"], as_index=False).size()
 table_column_count = table_column_count[table_column_count['size'] < 5]
 
@@ -145,8 +165,8 @@ stewards_table = df_tables_n[['DataSteward_value', 'DataSteward_EMAIL_value']].c
 stewards_table['DataSteward_EMAIL_value'] = stewards_table['DataSteward_EMAIL_value'].apply(str.lower)
 stewards_table = stewards_table.drop_duplicates()
 # USED FOR TESTING, COMMENT/DELETE
-stewards_table = stewards_table[stewards_table['DataSteward_value'].isin(['Daniel Andrus', 'Justin Wier',
-                                                                          'Ali Greenholt', 'Geoffrey Arnold'])]
+# stewards_table = stewards_table[stewards_table['DataSteward_value'].isin(['Daniel Andrus', 'Justin Wier',
+#                                                                           'Ali Greenholt', 'Geoffrey Arnold'])]
 if dev == "YES":
     stewards_table = stewards_table[stewards_table['DataSteward_value'].isin(['Daniel Andrus'])]
 
@@ -168,27 +188,32 @@ EmailTemplate = HTMLFile.read()
 
 def message_creater(stewardess, tables, template):
     link_rows = tables[tables['DataSteward_value'] == stewardess]
+    link_rows_log = tables[tables['DataSteward_value'] == stewardess]
     if len(link_rows.index) < 7:
         subcol_list = link_rows.merge(table_column_count[['table.tableId', 'collectionId', 'size']], how='left',
                                       left_on=['Datatable_Title_value', 'CollectionName_value'],
                                       right_on=['table.tableId', 'collectionId'])
 
-        subcol_list_filter = subcol_list[(subcol_list['size'].isnull()) | (subcol_list['size'] > 0)]
+        subcol_list_filter = subcol_list[(subcol_list['size'].notnull()) & (subcol_list['size'] > 0)]  # THIS IS CORRECT ONE
         if not subcol_list_filter.empty:
             row_html = []
             if len(subcol_list_filter.index) < 5:
                 for row in subcol_list_filter.index:
-                    sub_bullets_list = subcol_list_filter.merge(column_data,
-                                                                left_on=["CollectionName_value",
-                                                                         "Datatable_Title_value"],
-                                                                right_on=["collectionId",
-                                                                          "table.tableId"])
-                    sub_bullets_list = sub_bullets_list.merge(df[['CollectionName_value', 'ColumnTitle_value', 'Datatable_Title_value']],
-                                                              left_on=["CollectionName_value", "id_y", "table.tableId_y"],
-                                                              right_on=['CollectionName_value', 'ColumnTitle_value', 'Datatable_Title_value'],
-                                                              how="inner")
+                    row_sub_bullet = subcol_list_filter.iloc[[row]]
+                    sub_bullets_list = row_sub_bullet.merge(column_data,
+                                                            left_on=["CollectionName_value",
+                                                                     "Datatable_Title_value"],
+                                                            right_on=["collectionId",
+                                                                      "table.tableId"])
+                    sub_bullets_list = sub_bullets_list.merge(
+                        df[['CollectionName_value', 'ColumnTitle_value', 'Datatable_Title_value']],
+                        left_on=["CollectionName_value", "id_y", "table.tableId_y"],
+                        right_on=['CollectionName_value', 'ColumnTitle_value', 'Datatable_Title_value'],
+                        how="inner")
+                    if sub_bullets_list.empty:
+                        continue
+
                     sub_bullet_html = []
-                    row_html = []
                     for sub in sub_bullets_list.index:
                         sub_bullet_html.append(
                             """<li><a href="https://data.world/alleghenycounty/catalog/resource/{}">{}</a></li>""".
@@ -198,23 +223,26 @@ def message_creater(stewardess, tables, template):
                     sub_bullet = """<ul style="padding-left: 30px;type: square;">{}</ul>""".format(sub_bullet_html)
                     row_html.append(
                         """<li><a href="https://data.world/alleghenycounty/catalog/resource/{}/columns">{}</a></li>{}""".
-                        format(subcol_list_filter.loc[row]['encodedIri'],
-                               subcol_list_filter.loc[row]['Datatable_Title_value'],
+                        format(row_sub_bullet.loc[row]['encodedIri'],
+                               row_sub_bullet.loc[row]['Datatable_Title_value'],
                                sub_bullet))
-                    row_html = "".join(row_html)
-                    remove_row = subcol_list_filter.loc[[row]]
-                    anti_join = link_rows.merge(remove_row, how='outer', indicator=True)
+                    anti_join = link_rows_log.merge(row_sub_bullet, on="Datatable_Title_value",
+                                                    how='outer', indicator=True)
                     anti_join = anti_join[anti_join['_merge'] == 'left_only']
-                    link_rows = anti_join.drop(columns=['_merge'])
+                    link_rows_log = anti_join.drop(columns=['_merge'])
+                row_html = "".join(row_html)
             else:
                 row_html = ""
         else:
             row_html = ""
-        link_list = ["""<li><a href="https://data.world/alleghenycounty/catalog/resource/{}/columns">{}</a></li>""".
-                     format(link_rows['encodedIri'][row],
-                            link_rows['Datatable_Title_value'][row]) for row in link_rows.index]
-        link_list = "".join(link_list)
-        final_list = """{}{}""".format(row_html, link_list)
+        if not link_rows_log.empty:
+            link_list = ["""<li><a href="https://data.world/alleghenycounty/catalog/resource/{}/columns">{}</a></li>""".
+                         format(link_rows_log['encodedIri'][row_n],
+                                link_rows_log['Datatable_Title_value'][row_n]) for row_n in link_rows_log.index]
+            link_list = "".join(link_list)
+            final_list = """{}{}""".format(row_html, link_list)
+        else:
+            final_list = """{}""".format(row_html)
         final_list = "".join(final_list)
         link_list = final_list
     else:
@@ -253,8 +281,7 @@ for steward in stewards_table['DataSteward_value']:
                 delete(SQL_stewardTable)
                 .where(SQL_stewardTable.c.DataSteward_value == steward)
             )
-        stmt = insert(SQL_stewardTable).values(DataSteward_value = steward,
-                                               DataSteward_EMAIL_value = Steward_Email)
+        stmt = insert(SQL_stewardTable).values(DataSteward_value=steward,
+                                               DataSteward_EMAIL_value=Steward_Email)
         with engine.connect() as conn:
             result = conn.execute(stmt)
-
