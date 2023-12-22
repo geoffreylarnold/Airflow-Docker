@@ -45,9 +45,11 @@ for (table in tables) {
     query <- paste0("SELECT * FROM ", database, ".", schema, ".", table)
   }
   
+  master_table <- paste0("Master.", paste(dept, database, table, sep = "_"))
+
   # Append Value and Query
-  if (append_col != '') { 
-    value_sql <- paste0("SELECT ", append_type, "(", append_col, ") as value FROM Master.", paste(dept, database, table, sep = "_"))
+  if (append_col != '' && dbExistsTable(wh_con, SQL(master_table))) { 
+    value_sql <- paste0("SELECT ", append_type, "(", append_col, ") as value FROM ", master_table)
     value <- dbGetQuery(wh_con, value_sql)$value
     if (sql != '') { 
       query <- gsub("VALUE", value, query)

@@ -28,3 +28,4 @@ DataDotWorld/__pycache__/send_email.cpython-38.pyc
 *.tdsx
 *.tds
 /tableau-transfer/Data/*
+.RData

@@ -64,7 +64,7 @@ while (nrow(temp) %% offset_orig == 0) {
 
 # Make SQL Server friendly table
 final <- temp %>%
-  mutate(geometry_wkt = format(geometry)) %>%
+  mutate(geometry_wkt = st_as_text(geometry)) %>%
   st_drop_geometry()
 
 # Load to Warehouse
