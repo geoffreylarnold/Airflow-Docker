@@ -122,7 +122,7 @@ if datasource_id != '':
     """
     df = pt.frame_from_hyper_query('./Data/Extracts/{}.hyper'.format(name), query) #STOPPED HERERERER
     
-    # hyper_extract = pt.frames_from_hyper('./Data/Extracts/{}.hyper'.format(name))
+    hyper_extract = pt.frames_from_hyper('./Data/Extracts/{}.hyper'.format(name))
     current_data = pd.DataFrame(list(hyper_extract.values())[0])
 elif (project_id != '' and datasource_id == '') or (project_id != '' and datasource_id == ''):
     mode = "CreateNew"
@@ -199,11 +199,11 @@ if current_data is None:
                     print(f'Setting {col} to float', file=sys.stderr)
                     df[col] = df[col].astype(float)
         if count > 0:
-            pantab.frame_to_hyper(df, "temp.hyper", table=TableName("Extract", "Extract"), table_mode="a")
+            pt.frame_to_hyper(df, "temp.hyper", table=TableName("Extract", "Extract"), table_mode="a")
             print('Completed Chunk {}.'.format(count), file=sys.stderr)
             count += 1
         else:
-            pantab.frame_to_hyper(df, "temp.hyper", table=TableName("Extract", "Extract"))
+            pt.frame_to_hyper(df, "temp.hyper", table=TableName("Extract", "Extract"))
             print('Completed Chunk {}.'.format(count), file=sys.stderr)
             count = 1
         gc.collect()
@@ -214,7 +214,7 @@ if current_data is None:
     sys.exit(0)
 
 # Create lookup table of current Append_Column
-append_column_current =
+# append_column_current =
 
 # Read and write table to hyper file
 
