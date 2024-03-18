@@ -4,10 +4,9 @@ import os
 import pandas as pd
 import sqlalchemy as sa
 import pantab
-import tableauserverclient as TSC
+import tableauserverclient as tsc
 import sys
 from tableauhyperapi import TableName
-import re
 import gc
 from sqlalchemy.engine import URL
 
@@ -78,7 +77,7 @@ for df in pd.read_sql_query("SELECT {} FROM {}.{}".format(column_q, schema, tabl
         for col in list(df):
             if col in datecols:
                 print(f'Set {col} to dateimte', file=sys.stderr)
-                df[col] = pd.to_datetime(df[col], errors = 'coerce')
+                df[col] = pd.to_datetime(df[col], errors='coerce')
                 # Remove Timezone for Hyper file
     for col in df.select_dtypes('datetimetz').columns:
         print(f'Fixing {col} timezone', file=sys.stderr)
@@ -105,16 +104,16 @@ for df in pd.read_sql_query("SELECT {} FROM {}.{}".format(column_q, schema, tabl
     gc.collect()
     
 # Connect to Tableau Server
-server = TSC.Server('https://{}.alleghenycounty.us'.format(server))
-server.version = '3.3'
-tableau_auth = TSC.TableauAuth(tableau_username, tableau_password, site_id=site)
+server = tsc.Server('https://{}.alleghenycounty.us'.format(server))
+server.version = '3.21'
+tableau_auth = tsc.TableauAuth(tableau_username, tableau_password, site_id=site)
 
 # Find if data source exist
 with server.auth.sign_in(tableau_auth):
-    req_option = TSC.RequestOptions()
-    req_option.filter.add(TSC.Filter(TSC.RequestOptions.Field.Name, TSC.RequestOptions.Operator.Equals, name))
+    req_option = tsc.RequestOptions()
+    req_option.filter.add(tsc.Filter(tsc.RequestOptions.Field.Name, tsc.RequestOptions.Operator.Equals, name))
     req_option.filter.add(
-        TSC.Filter(TSC.RequestOptions.Field.ProjectName, TSC.RequestOptions.Operator.Equals, project_name))
+        tsc.Filter(tsc.RequestOptions.Field.ProjectName, tsc.RequestOptions.Operator.Equals, project_name))
     all_datasources = server.datasources.get(req_option)
     if str(all_datasources[0]) != '[]':
         first = all_datasources[0][0]
@@ -126,9 +125,9 @@ with server.auth.sign_in(tableau_auth):
 # Find project ID if resource doesn't exist and project ID was not provided
 if project_id == '' and not first_check:
     with server.auth.sign_in(tableau_auth):
-        req_option = TSC.RequestOptions()
+        req_option = tsc.RequestOptions()
         req_option.filter.add(
-            TSC.Filter(TSC.RequestOptions.Field.Name, TSC.RequestOptions.Operator.Equals, project_name))
+            tsc.Filter(tsc.RequestOptions.Field.Name, tsc.RequestOptions.Operator.Equals, project_name))
         all_project_items, pagination_item = server.projects.get(req_option)
         parse = list([proj.id for proj in all_project_items])
         project_id = str(parse[0])
@@ -139,7 +138,7 @@ print('Found Project ID ({}).'.format(project_id), file=sys.stderr)
 if len(all_datasources) == 2 and first_check:
     upload = first
 elif project_id != '':
-    upload = TSC.DatasourceItem(project_id, name=name)
+    upload = tsc.DatasourceItem(project_id, name=name)
 elif project_id == '' and project_name == '':
     sys.exit('No projects exist with project name {}. Create this project or choose a different project name'.format(
         project_name))
@@ -147,7 +146,7 @@ elif len(parse) > 1:
     sys.exit('More than one projects exist with project name {}. Please pass the projects API id.'.format(project_name))
 else:
     mode = 'CreateNew'
-    upload = TSC.DatasourceItem(project_id, name=name)
+    upload = tsc.DatasourceItem(project_id, name=name)
 
 print('Writing Hyperfile to Tableau Server.', file=sys.stderr)
 
