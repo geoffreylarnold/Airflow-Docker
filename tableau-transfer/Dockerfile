@@ -1,6 +1,6 @@
 from countystats/python3:10
 
-MAINTAINER Geoffrey Arnold "geoffrey.arnold@alleghenycounty.us"
+MAINTAINER Daniel Andrus "daniel.andrus@alleghenycounty.us"
 
 RUN pip install --upgrade pip
 

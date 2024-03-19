@@ -61,3 +61,11 @@ tableau_demog = DockerOperator(
                 network_mode="bridge"
         )
 ```
+
+# Versions/Tags
+* python
+  * Latest version
+* debug
+  * Deprecated chunking method with integer value assignment based on data type
+* 1.0
+  * Archive used up until tableau server upgrade

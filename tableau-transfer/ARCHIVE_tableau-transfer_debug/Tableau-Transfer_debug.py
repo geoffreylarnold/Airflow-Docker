@@ -55,11 +55,11 @@ for df in pd.read_sql_table(table, engine, schema = schema, chunksize = 100000):
     for col in df.select_dtypes('int64').columns:
         df[col] = df[col].astype(float)
     if count > 0:
-        pantab.frame_to_hyper(df, "temp.hyper", table=TableName("Extract", "Extract"), table_mode = "a") 
+        pantab.frame_to_hyper(df, "../temp.hyper", table=TableName("Extract", "Extract"), table_mode ="a")
         count += 1
         print('Completed Chunk {}.'.format(count), file=sys.stderr)
     else: 
-        pantab.frame_to_hyper(df, "temp.hyper", table=TableName("Extract", "Extract")) 
+        pantab.frame_to_hyper(df, "../temp.hyper", table=TableName("Extract", "Extract"))
         count = 1    
     gc.collect()
 
