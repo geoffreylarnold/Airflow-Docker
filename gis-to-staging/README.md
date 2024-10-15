@@ -16,6 +16,7 @@ Image name: `countystats/gis-to-staging:r`
 * UPDATE_COL: Column to check for new records based on source location.
 * OFFSET: Number of records to be read per chunk (do not make this more than the services `Max Record Count` indicated in the API page.
   * Default: 1000
+* INT_COL: Specify columns with sparse data that need to maintain integer formatting, avoids mismatch error when employing offset. 
 
 *Required Variable
 

@@ -67,3 +67,46 @@ schema = schema_device = DockerOperator(
                 network_mode="bridge"
         )
 ```
+
+### Iteration example
+
+```python
+from airflow.decorators import task_group
+
+def clean_list(oldlist):
+      cleaned = oldlist.__str__().replace("[", "").replace("'", "").replace("]", "").replace(" ", "")
+      return cleaned
+    
+tables_l = ['List', 'Of', 'Tables']
+tables = clean_list(tables_l)    
+    # ------- 
+    
+    def run_dag_task(variable):
+        validate_schema = DockerOperator(
+            task_id=f'Validate_{variable}',
+            image='countystats/data-validate:r',
+            api_version='1.39',
+            auto_remove=True,
+            environment={
+                'DEPT': dept,
+                'TABLE': variable,
+                'COL_SCHEMA': Variable.get("""{}_schema""".format(variable)),
+                'SOURCE': connection.schema,
+                'WH_HOST': wh_connection.host,
+                'WH_DB': wh_connection.schema,
+                'WH_USER': wh_connection.login,
+                'WH_PASS': wh_connection.password
+            },
+            docker_url='unix://var/run/docker.sock',
+            command='Rscript schema-validate.R',
+            network_mode="bridge"
+        )
+        return validate_schema
+
+
+    @task_group(group_id='data_validations')
+    def tg1():
+        for tables_l in full_tables[0:]:
+            task_iterate = run_dag_task(tables_l)
+            task_iterate
+```

@@ -20,6 +20,8 @@ sheet <- Sys.getenv('SHEET', 1)
 
 wh_host <- Sys.getenv('WH_HOST')
 wh_db <- Sys.getenv('WH_DB')
+wh_user <- Sys.getenv('WH_USER')
+wh_pass <- Sys.getenv('WH_PASS')
 
 # Read File
 if(!is.na(workbook)){
@@ -38,8 +40,9 @@ new_table <- read_excel(paste0(filepath,"/", workbook),
 # Connection to Warehouses
 
 
-wh_con <- dbConnect(odbc::odbc(), driver = "{ODBC Driver 17 for SQL Server}", server = wh_host, database = wh_db, 
-                    trusted_connection="YES")
+wh_con <- dbConnect(odbc::odbc(), driver = "{ODBC Driver 17 for SQL Server}", server = wh_host, database = wh_db
+                    # , trusted_connection="YES"
+                    , UID = wh_user, pwd = wh_pass)
 
 # Write to Staging
 table_name <- paste(schema, paste(dept, source, table, sep = "_"), sep = ".")

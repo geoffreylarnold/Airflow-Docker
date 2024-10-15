@@ -8,6 +8,13 @@ RUN apt-get update && apt-get install -y \
 
 COPY instantclient_19_5 ./
 
+COPY *.crt /usr/local/share/ca-certificates/
+
+RUN apt-get --allow-releaseinfo-change update
+RUN apt-get update                             \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates wget 
+
 RUN export ORACLE_HOME=$(pwd)/instantclient_19_5
 
 RUN export ORACLE_HOME=/location/of/your/files/instantclient_19_5

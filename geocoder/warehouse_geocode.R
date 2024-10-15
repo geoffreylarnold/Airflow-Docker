@@ -22,6 +22,7 @@ wh_pass <- Sys.getenv('WH_PASS')
 id_col <- Sys.getenv("ID_COL")
 full_address <- Sys.getenv("FULL_ADDRESS")
 where <- Sys.getenv("WHERE", unset = "TRUE")
+endpoint <- Sys.getenv("ENDPOINT", unset = "verification")
 
 # Connection to Warehouse
 wh_con <- dbConnect(odbc::odbc(), driver = "{ODBC Driver 17 for SQL Server}", server = wh_host, database = wh_db, UID = wh_user, pwd = wh_pass)
@@ -50,7 +51,7 @@ df <- dbGetQuery(wh_con, query) %>%
 # If new rows geocode
 if (nrow(df) > 0) {
   geo <- df %>%
-    mutate_countyGeo(FULL_ADDRESS)
+    mutate_countyGeo(FULL_ADDRESS, endpoint = endpoint)
   
   if (append) {
     # Append Table to Warehouse

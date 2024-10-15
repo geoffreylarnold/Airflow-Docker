@@ -23,7 +23,7 @@ filename <- Sys.getenv("FILENAME")
 file_id <- Sys.getenv("FILE_ID")
 snakecase <- Sys.getenv("SNAKECASE", unset = "FALSE")
 
-file_type <- tools::file_ext(filename)
+file_type <- tolower(tools::file_ext(filename))
 
 # Table Fix
 pattern <- paste0(".", file_type)
@@ -77,7 +77,7 @@ wh_con <- dbConnect(odbc::odbc(), driver = "{ODBC Driver 17 for SQL Server}", se
 # Write Table
 table_name <- paste(dept, source, table, sep = "_")
 # Create Max Cols Type List
-if (max_cols %in% colnames(temp) & nrow(temp) > 0) {
+if (any(max_cols %in% colnames(temp)) & nrow(temp) > 0) {
   # ID Max Cols for this table
   cols <- colnames(temp)[which(colnames(temp) %in% max_cols)]
   
@@ -92,7 +92,7 @@ if (max_cols %in% colnames(temp) & nrow(temp) > 0) {
   
   # Transfer Data to Warehouse
   dbWriteTable(wh_con, SQL(paste("Staging", table_name, sep =".")), temp, field.type = types, overwrite = TRUE)
-} else if (max_cols == "auto") {
+} else if (any(max_cols == "auto")) {
   list <- lapply(temp, function(x) max(nchar(x), na.rm = T)) 
   max_cols <- temp[sapply(temp, function(x) max(nchar(x), na.rm = T))> 255]
   

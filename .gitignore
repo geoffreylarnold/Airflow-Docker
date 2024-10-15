@@ -31,3 +31,5 @@ DataDotWorld/__pycache__/send_email.cpython-38.pyc
 .RData
 postgres-to-warehouse/Test.R
 sharepoint-to-staging/.ipynb_checkpoints/Get Drive & File ID-checkpoint.py
+sharepoint-to-staging/SSL.fwd.proxy.2024.crt
+tableau-transfer/.ipynb_checkpoints/list_hyper_contents-checkpoint.py

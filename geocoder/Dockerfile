@@ -1,6 +1,9 @@
-FROM countystats/r-basic:1.1
+FROM countystats/r-basic:4.2.1
 
 MAINTAINER Geoffrey Arnold "geoffrey.arnold@alleghenycounty.us"
+
+RUN install2.r --error \
+    plyr
 
 COPY alco_geocoder.R /
 

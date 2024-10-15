@@ -9,7 +9,7 @@ Image Name: `countystats/sharepoint-to-staging:python`
 * table: Datawarehouse table name*
 * schema: Datawarehouse Schema to pull from
   * Default: `Staging`
-* sheet: If not loading the first sheet of the excel document, put complete sheet name here
+* sheet: If not loading the first sheet of the Excel document, put complete sheet name here
   * Default: First sheet of Excel document
 * client_id: Microsoft Graph API Airflow Variable*
 * client_secret: Microsoft Graph API Airflow Variable*
@@ -49,5 +49,53 @@ pull_motions = DockerOperator(
                 },
                 docker_url='unix://var/run/docker.sock',
                 network_mode="bridge"
+        )
+```
+
+# sharepoint_upload (excel file)
+
+Template to load file from K: into a sharepoint site folder.
+
+Image Name: `countystats/sharepoint-to-staging:1.0`
+
+Needs the following command within the docker operator:
+`command= 'python3 sharepoint_upload.py'`
+
+## Environmental Variables:
+* client_id: Microsoft Graph API Airflow Variable*
+* client_secret: Microsoft Graph API Airflow Variable*
+* drive_id: ID of the user or Sharepoint groups Drive. Use `Get Drive & File ID.ipynb` to get ID.*
+* filename: name of file to upload*
+* folder_name: name of target sharepoint folder, defaults to `None` which lands the file in the root Documents folder.
+
+(*) Required variable
+
+## Dag Example
+
+```
+...
+upload_motions = DockerOperator(
+                task_id='upload_motions',
+                image='countystats/sharepoint-to-staging:1.0',
+                api_version='1.39',
+                auto_remove=True,
+                environment={
+                    'client_id': Variable.get("o365_client_id"),
+                    'client_secret':  Variable.get("o365_client_secret"),
+                    'drive_id': 'some_id_from_notebook',
+                    'filename': 'some_filename',
+                    'source_folder_name': 'some_folder_name_on_MountedDrive',
+                    'target_folder_name': 'some_folder_name_on_sharepoint'
+                },
+                docker_url='unix://var/run/docker.sock',
+                network_mode="bridge",
+                command= 'python3 sharepoint_upload.py',
+                mounts=[
+                        Mount(
+                                source='/media/CountyExecutive',
+                                target='/CountyExec',
+                                type='bind'
+                            )
+                ]
         )
 ```

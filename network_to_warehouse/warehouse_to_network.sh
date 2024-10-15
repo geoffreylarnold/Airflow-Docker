@@ -1,0 +1,1 @@
+kinit sa00427@COUNTY.ALLEGHENY.LOCAL -k -t /Kerberos/sa00427.keytab && Rscript warehouse_to_network.R

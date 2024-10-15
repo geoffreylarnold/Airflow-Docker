@@ -9,8 +9,22 @@ RUN install2.r --error \
 
 RUN fc-cache -fv
 
-RUN apt-get update --allow-releaseinfo-change && apt-get install -y \
-    python3-pip
+
+COPY SSL.fwd.proxy.2024.crt /usr/local/share/ca-certificates/SSL.fwd.proxy.2024.crt
+#RUN chmod 644 /usr/local/share/ca-certificates/SSL.fwd.proxy.2024.crt
+#RUN sudo openssl x509 -inform der -outform pem -in /usr/local/share/ca-certificates/SSL.fwd.proxy.2024.crt -out /usr/local/share/ca-certificates/SSL.fwd.proxy.2024.crt
+COPY R3.der /usr/local/share/ca-certificates/R3.der
+RUN chmod 644 /usr/local/share/ca-certificates/R3.der
+RUN sudo openssl x509 -inform der -outform pem -in /usr/local/share/ca-certificates/R3.der -out /usr/local/share/ca-certificates/R3.crt
+COPY GeoTrustRSACA2018.crt /usr/local/share/ca-certificates/GeoTrustRSACA2018.crt
+RUN chmod 644 /usr/local/share/ca-certificates/GeoTrustRSACA2018.crt
+#COPY DigiCertTLSRSASHA2562020CA1-1.crt /usr/local/share/ca-certificates/DigiCertTLSRSASHA2562020CA1-1.crt
+RUN update-ca-certificates
+
+RUN apt-get --allow-releaseinfo-change update
+RUN apt-get update                             \
+     && apt-get install -y --no-install-recommends \
+        ca-certificates curl python3-certifi python3-pip
 
 RUN pip3 install pandas \
     oauthlib \
