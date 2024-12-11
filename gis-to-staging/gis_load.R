@@ -109,9 +109,13 @@ final <- temp %>%
   mutate(geometry_wkt = format(geometry)) %>%
   st_drop_geometry()
 
-
 # Load to Warehouse
 load_table <- paste0("Staging.", dept, "_GISOnline_", table)
+# Waiting on DIT to fix permissions in database
 dbWriteTable(wh_con, SQL(load_table), final, overwrite = TRUE, field.type = list("geometry_wkt" = "varchar(max)"))
+
+# Make Geometry Column GIS Friendly
+dbExecute(wh_con, paste0("ALTER TABLE ", load_table, "
+            ADD geometry AS geography::STGeomFromText(geometry_wkt, 4326).MakeValid()"))
 
 dbDisconnect(wh_con)
